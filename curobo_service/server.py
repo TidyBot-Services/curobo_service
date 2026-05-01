@@ -55,6 +55,13 @@ class IKRequest(BaseModel):
     seed_q: Optional[list[float]] = None
 
 
+class ValidateBaseRequest(BaseModel):
+    env_id: Optional[str] = None
+    base_positions: list[list[float]]
+    target_pos: list[float]
+    base_box: dict = Field(..., description="{center_xy, half_extents}")
+
+
 # ---- app factory ----------------------------------------------------------
 
 def create_app() -> FastAPI:
@@ -132,6 +139,18 @@ def create_app() -> FastAPI:
                 target_quat=req.target_quat,
                 lock_base=(req.mask == "arm_only"),
                 seed_q=req.seed_q,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+
+    @app.post("/plan/validate_base_path")
+    def validate_base_path(req: ValidateBaseRequest):
+        try:
+            return planner.validate_base_path(
+                env_id=_env(req.env_id),
+                base_positions=req.base_positions,
+                target_pos=req.target_pos,
+                base_box=req.base_box,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")

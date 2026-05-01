@@ -112,6 +112,29 @@ class PlannerAdapter:
                 return {"status": "failed", "qpos": None}
             return {"status": "success", "qpos": qpos.tolist()}
 
+    def validate_base_path(self, env_id: str, base_positions: list[list[float]],
+                           target_pos: list[float],
+                           base_box: dict) -> dict:
+        """Forward to CuroboPlanner.validate_base_path.
+
+        Returns {collision: bool, waypoint_idx: int, fixture_name: str}.
+        """
+        with self._lock:
+            if not self._warmed_up:
+                self._planner.warmup()
+                self._warmed_up = True
+            self._ensure_world(env_id)
+            collision, idx, name = self._planner.validate_base_path(
+                np.asarray(base_positions, dtype=float),
+                target_pos=np.asarray(target_pos, dtype=float),
+                base_box=base_box,
+            )
+            return {
+                "collision": bool(collision),
+                "waypoint_idx": int(idx),
+                "fixture_name": str(name),
+            }
+
     # ------------------------------------------------------------------
     # World hookup
     # ------------------------------------------------------------------
