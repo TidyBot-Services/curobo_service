@@ -1,0 +1,10 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.0
+numpy>=1.24
+
+# cuRobo and torch are NOT pinned here — the service depends on the
+# environment where it runs already having a working cuRobo install
+# (typically a conda env with torch 2.10+cu128 + cuRobo from source on Blackwell).
+# See README.md for setup. Adding pip pins here would force a re-install
+# that breaks GPU-specific builds.
