@@ -120,9 +120,15 @@ class CuroboPlanner:
 
             if robot_pos is not None:
                 rx, ry = robot_pos[0], robot_pos[1]
-
-                # Skip cuboids that overlap with robot position (cause start-state collision)
-                margin = 0.15  # 15cm margin
+                # Was margin=0.15 to skip cuboids whose 2D footprint
+                # overlapped the base — that gave the planner a false
+                # sense of "free" near the robot and let the arm sweep
+                # into things directly under/around it. With margin=0
+                # we keep ALL cuboids in the collision world. The
+                # "stuck at home" problem this used to mask is now
+                # handled by the cspace activation_distance buffer in
+                # metrics_base.yml (shipped via apply_patches).
+                margin = 0.0
                 if (cx - hx - margin < rx < cx + hx + margin and
                     cy - hy - margin < ry < cy + hy + margin):
                     skipped_overlap += 1

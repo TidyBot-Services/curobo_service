@@ -44,6 +44,44 @@ curl -X POST http://localhost:7000/warmup
 # {"status":"warmed_up"}     # ~30s the first time
 ```
 
+## cuRobo config patches (auto-applied at startup)
+
+This service ships **two patches** to cuRobo 0.8.x's bundled configs that are
+required for real-pipeline correctness on the Tidybot kitchen scenes. They
+are applied automatically on `python -m curobo_service` startup
+(`apply_patches.apply()` in `__main__.py`):
+
+1. **`task/metrics_base.yml`**
+   - `cspace_cfg.activation_distance: [0.0]*5 → [-0.005]*5`
+     (5mm buffer past joint limits — eliminates fp-precision false positives
+     when IK puts a joint exactly at its limit, e.g. `panda_joint4 = -0.07`.
+     Without this, the PRM emits a misleading "Start or End state in
+     collision" warning and the planner refuses.)
+   - `scene_collision_cfg.activation_distance: 0.0 → 0.02`
+     (2cm safety margin between robot spheres and kitchen cuboids, instead
+     of allowing borderline contact.)
+
+2. **`robot/spheres/franka_tidyverse_mesh.yml`**
+   - `base_link_z` top sphere layer (z=0.5) radius `0.10 → 0.05`
+     (cosmetic — Tidybot base body actually ends at z≈0.47, so a 10cm-radius
+     sphere centered at z=0.5 modeled volume that doesn't exist. Smaller
+     radius reduces false-positive overlap with cabinet doors.)
+
+Patches live in `curobo_service/assets/{task,spheres}/` and are tracked in
+this repo. Originals are backed up to `<filename>.curobo_service_orig` on
+first apply, so you can `python -m curobo_service.apply_patches --revert` to
+restore.
+
+Idempotent: re-running the service skips files already byte-identical.
+
+To opt out (e.g. against a pre-patched cuRobo fork):
+```bash
+CUROBO_SERVICE_SKIP_PATCHES=1 python -m curobo_service
+```
+
+Tested against `cuRobo 0.8.x`. Outside that prefix the patcher emits a WARN
+and applies anyway.
+
 ## API
 
 All POST bodies are JSON. `env_id` is optional and defaults to
