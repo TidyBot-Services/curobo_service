@@ -62,7 +62,7 @@ class CuroboPlanner:
             robot=self._ROBOT_CFG_YML,
             scene_model=dummy_scene,
             collision_cache={"cuboid": 100, "mesh": 10},
-            optimizer_collision_activation_distance=0.01,
+            optimizer_collision_activation_distance=0.05,
             use_cuda_graph=False,  # allow runtime obstacle / lock changes
         )
         self._planner = MotionPlanner(cfg)
@@ -87,7 +87,7 @@ class CuroboPlanner:
             robot=cfg_dict["robot_cfg"],     # MotionPlannerCfg.create accepts dict
             scene_model=dummy_scene,
             collision_cache={"cuboid": 100, "mesh": 10},
-            optimizer_collision_activation_distance=0.01,
+            optimizer_collision_activation_distance=0.05,
             use_cuda_graph=False,
         )
         self._planner_arm = MotionPlanner(cfg_arm)
